@@ -134,12 +134,28 @@
     var step1 = qs('vte-step-1');
     var step2 = qs('vte-step-2');
 
+    // Store route data for submission
+    var routeData = {
+      pickup: '',
+      dropoff: '',
+      price: '',
+      distance: '',
+      transit: ''
+    };
+
     // Next step action: show user info form or redirect
     nextBtn.addEventListener('click', function(){
       // Check if we have a valid estimate (not an error message)
       var estimateVisible = estimateWrap && !estimateWrap.hidden;
 
       if (estimateVisible) {
+        // Store route data
+        routeData.pickup = pickup.value;
+        routeData.dropoff = dropoff.value;
+        routeData.price = priceEl.textContent;
+        routeData.distance = distEl.textContent;
+        routeData.transit = transitEl.textContent;
+
         // Show step 2 (user info form)
         step1.hidden = true;
         step2.hidden = false;
@@ -176,17 +192,55 @@
           return;
         }
 
-        // Here you can add your form submission logic
-        console.log('Form submitted:', {
-          fullname: fullname,
-          phone: phone,
-          email: email
-        });
+        // Disable submit button during submission
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Submitting...';
 
-        // Redirect to next step URL if configured
-        if (vteData.nextStepUrl) {
-          window.location.href = vteData.nextStepUrl;
-        }
+        // Prepare form data
+        var formData = new FormData();
+        formData.append('action', 'vte_submit_form');
+        formData.append('nonce', vteData.nonce);
+        formData.append('fullname', fullname);
+        formData.append('phone', phone);
+        formData.append('email', email);
+        formData.append('pickup', routeData.pickup);
+        formData.append('dropoff', routeData.dropoff);
+        formData.append('price', routeData.price);
+        formData.append('distance', routeData.distance);
+        formData.append('transit', routeData.transit);
+
+        // Send AJAX request
+        fetch(vteData.ajaxUrl, {
+          method: 'POST',
+          body: formData,
+          credentials: 'same-origin'
+        })
+        .then(function(response) {
+          return response.json();
+        })
+        .then(function(data) {
+          if (data.success) {
+            // Success - redirect to next step
+            if (data.data.redirect) {
+              window.location.href = data.data.redirect;
+            } else {
+              alert(data.data.message);
+              submitBtn.disabled = false;
+              submitBtn.innerHTML = '<svg class="vte-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"></path></svg>Next Step';
+            }
+          } else {
+            // Error
+            alert(data.data.message || 'An error occurred. Please try again.');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<svg class="vte-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"></path></svg>Next Step';
+          }
+        })
+        .catch(function(error) {
+          console.error('Error:', error);
+          alert('An error occurred. Please try again.');
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<svg class="vte-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"></path></svg>Next Step';
+        });
       });
     }
   }

@@ -10,7 +10,7 @@ function vte_register_settings() {
         'vte_main_section',
         __( 'Transport Estimator Settings', 'vehicle-transport-estimator' ),
         function() {
-            echo '<p>' . esc_html__( 'Configure phone number and next-step URL used by the estimator.', 'vehicle-transport-estimator' ) . '</p>';
+            echo '<p>' . esc_html__( 'Configure phone number, next-step URL, and webhook integration.', 'vehicle-transport-estimator' ) . '</p>';
         },
         'vte_settings'
     );
@@ -30,6 +30,14 @@ function vte_register_settings() {
         'vte_settings',
         'vte_main_section'
     );
+
+    add_settings_field(
+        'vte_webhook_url',
+        __( 'Webhook URL', 'vehicle-transport-estimator' ),
+        'vte_webhook_url_field_cb',
+        'vte_settings',
+        'vte_main_section'
+    );
 }
 add_action( 'admin_init', 'vte_register_settings' );
 
@@ -45,6 +53,12 @@ function vte_next_url_field_cb() {
     printf( '<input type="url" id="vte_next_url" name="vte_settings[next_step_url]" value="%s" class="regular-text">', esc_attr( $val ) );
 }
 
+function vte_webhook_url_field_cb() {
+    $opts = get_option( 'vte_settings', array() );
+    $val = isset( $opts['webhook_url'] ) ? $opts['webhook_url'] : '';
+    printf( '<input type="url" id="vte_webhook_url" name="vte_settings[webhook_url]" value="%s" class="regular-text" placeholder="https://example.com/webhook">' . '<p class="description">%s</p>', esc_attr( $val ), esc_html__( 'Enter the webhook URL where form submissions will be sent.', 'vehicle-transport-estimator' ) );
+}
+
 function vte_sanitize_settings( $input ) {
     $out = array();
     if ( isset( $input['phone'] ) ) {
@@ -53,16 +67,21 @@ function vte_sanitize_settings( $input ) {
     if ( isset( $input['next_step_url'] ) ) {
         $out['next_step_url'] = esc_url_raw( $input['next_step_url'] );
     }
+    if ( isset( $input['webhook_url'] ) ) {
+        $out['webhook_url'] = esc_url_raw( $input['webhook_url'] );
+    }
     return $out;
 }
 
 function vte_add_settings_page() {
-    add_options_page(
+    add_menu_page(
         __( 'Transport Estimator', 'vehicle-transport-estimator' ),
         __( 'Transport Estimator', 'vehicle-transport-estimator' ),
         'manage_options',
         'vte_settings',
-        'vte_render_settings_page'
+        'vte_render_settings_page',
+        'dashicons-car',
+        30
     );
 }
 add_action( 'admin_menu', 'vte_add_settings_page' );

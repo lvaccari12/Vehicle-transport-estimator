@@ -37,7 +37,7 @@ function vte_get_option( $key ) {
     if ( isset( $opts[ $key ] ) && '' !== $opts[ $key ] ) {
         return $opts[ $key ];
     }
-    return $defaults[ $key ];
+    return isset( $defaults[ $key ] ) ? $defaults[ $key ] : '';
 }
 
 /**
@@ -110,6 +110,8 @@ function vte_shortcode_handler( $atts ) {
         'estimates' => $estimates,
         'phone' => $phone_esc,
         'nextStepUrl' => $next_esc,
+        'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+        'nonce' => wp_create_nonce( 'vte_submit_nonce' ),
         'strings' => array(
             'heading' => __( 'Vehicle Transport Estimate', 'vehicle-transport-estimator' ),
             'pickup_label' => __( 'Pick-up State', 'vehicle-transport-estimator' ),
@@ -202,3 +204,95 @@ function vte_shortcode_handler( $atts ) {
     return ob_get_clean();
 }
 add_shortcode( 'vehicle_transport_estimator', 'vte_shortcode_handler' );
+
+/**
+ * AJAX handler for form submission.
+ */
+function vte_ajax_submit_form() {
+    // Verify nonce
+    check_ajax_referer( 'vte_submit_nonce', 'nonce' );
+
+    // Get form data
+    $fullname = isset( $_POST['fullname'] ) ? sanitize_text_field( $_POST['fullname'] ) : '';
+    $phone = isset( $_POST['phone'] ) ? sanitize_text_field( $_POST['phone'] ) : '';
+    $email = isset( $_POST['email'] ) ? sanitize_email( $_POST['email'] ) : '';
+
+    // Get route data
+    $pickup = isset( $_POST['pickup'] ) ? sanitize_text_field( $_POST['pickup'] ) : '';
+    $dropoff = isset( $_POST['dropoff'] ) ? sanitize_text_field( $_POST['dropoff'] ) : '';
+    $price = isset( $_POST['price'] ) ? sanitize_text_field( $_POST['price'] ) : '';
+    $distance = isset( $_POST['distance'] ) ? sanitize_text_field( $_POST['distance'] ) : '';
+    $transit = isset( $_POST['transit'] ) ? sanitize_text_field( $_POST['transit'] ) : '';
+
+    // Validate required fields
+    if ( empty( $fullname ) || empty( $phone ) || empty( $email ) ) {
+        wp_send_json_error( array(
+            'message' => __( 'Please fill in all required fields.', 'vehicle-transport-estimator' )
+        ) );
+        return;
+    }
+
+    if ( empty( $pickup ) || empty( $dropoff ) ) {
+        wp_send_json_error( array(
+            'message' => __( 'Route information is missing.', 'vehicle-transport-estimator' )
+        ) );
+        return;
+    }
+
+    // Prepare webhook payload
+    $payload = array(
+        'fullname' => $fullname,
+        'phone' => $phone,
+        'email' => $email,
+        'route' => array(
+            'pickup' => $pickup,
+            'dropoff' => $dropoff,
+            'price' => $price,
+            'distance' => $distance,
+            'transit' => $transit,
+        ),
+        'timestamp' => current_time( 'mysql' ),
+        'source' => 'vehicle-transport-estimator',
+    );
+
+    // Get webhook URL from settings
+    $webhook_url = vte_get_option( 'webhook_url' );
+
+    if ( ! empty( $webhook_url ) ) {
+        // Send webhook
+        $response = wp_remote_post( $webhook_url, array(
+            'headers' => array(
+                'Content-Type' => 'application/json',
+            ),
+            'body' => wp_json_encode( $payload ),
+            'timeout' => 15,
+            'sslverify' => true,
+        ) );
+
+        // Check for errors
+        if ( is_wp_error( $response ) ) {
+            wp_send_json_error( array(
+                'message' => __( 'Failed to send webhook. Please try again.', 'vehicle-transport-estimator' ),
+                'error' => $response->get_error_message(),
+            ) );
+            return;
+        }
+
+        $response_code = wp_remote_retrieve_response_code( $response );
+        if ( $response_code < 200 || $response_code >= 300 ) {
+            wp_send_json_error( array(
+                'message' => __( 'Webhook returned an error. Please try again.', 'vehicle-transport-estimator' ),
+                'code' => $response_code,
+            ) );
+            return;
+        }
+    }
+
+    // Success response
+    wp_send_json_success( array(
+        'message' => __( 'Form submitted successfully!', 'vehicle-transport-estimator' ),
+        'redirect' => vte_get_option( 'next_step_url' ),
+    ) );
+}
+add_action( 'wp_ajax_vte_submit_form', 'vte_ajax_submit_form' );
+add_action( 'wp_ajax_nopriv_vte_submit_form', 'vte_ajax_submit_form' );
