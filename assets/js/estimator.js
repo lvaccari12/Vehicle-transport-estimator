@@ -24,6 +24,18 @@
     var callBtn = qs('vte-call');
     var nextBtn = qs('vte-next');
 
+    // Initialize intl-tel-input
+    var phoneInput = qs('vte-phone');
+    var iti;
+    if (phoneInput && typeof window.intlTelInput !== 'undefined') {
+      iti = window.intlTelInput(phoneInput, {
+        initialCountry: 'us',
+        preferredCountries: ['us', 'ca', 'mx'],
+        separateDialCode: true,
+        utilsScript: 'https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.12/build/js/utils.js'
+      });
+    }
+
     // populate selects
     vteData.states.forEach(function(s){
       pickup.appendChild(createOption(s));
@@ -118,12 +130,65 @@
       });
     }
 
-    // Next step action: redirect by default
+    // Step navigation
+    var step1 = qs('vte-step-1');
+    var step2 = qs('vte-step-2');
+
+    // Next step action: show user info form or redirect
     nextBtn.addEventListener('click', function(){
-      if (vteData.nextStepUrl) {
+      // Check if we have a valid estimate (not an error message)
+      var estimateVisible = estimateWrap && !estimateWrap.hidden;
+
+      if (estimateVisible) {
+        // Show step 2 (user info form)
+        step1.hidden = true;
+        step2.hidden = false;
+      } else if (vteData.nextStepUrl) {
+        // Fallback to redirect
         window.location.href = vteData.nextStepUrl;
       }
     });
+
+    // Form submission
+    var submitBtn = qs('vte-submit');
+    if (submitBtn) {
+      submitBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+
+        var fullname = qs('vte-fullname').value;
+        var phone = phoneInput ? phoneInput.value : '';
+        var email = qs('vte-email').value;
+
+        // Get full phone number with country code if intl-tel-input is initialized
+        if (iti) {
+          phone = iti.getNumber();
+        }
+
+        // Basic validation
+        if (!fullname || !phone || !email) {
+          alert('Please fill in all fields');
+          return;
+        }
+
+        // Validate phone number if intl-tel-input is available
+        if (iti && !iti.isValidNumber()) {
+          alert('Please enter a valid phone number');
+          return;
+        }
+
+        // Here you can add your form submission logic
+        console.log('Form submitted:', {
+          fullname: fullname,
+          phone: phone,
+          email: email
+        });
+
+        // Redirect to next step URL if configured
+        if (vteData.nextStepUrl) {
+          window.location.href = vteData.nextStepUrl;
+        }
+      });
+    }
   }
 
   if (document.readyState === 'loading') {

@@ -45,8 +45,13 @@ function vte_get_option( $key ) {
  */
 function vte_register_assets() {
     $ver = VTE_VERSION;
-    wp_register_style( 'vte-style', VTE_URL . 'assets/css/estimator.css', array(), $ver );
-    wp_register_script( 'vte-script', VTE_URL . 'assets/js/estimator.js', array(), $ver, true );
+    // intl-tel-input library
+    wp_register_style( 'intl-tel-input', 'https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.12/build/css/intlTelInput.css', array(), '23.0.12' );
+    wp_register_script( 'intl-tel-input', 'https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.12/build/js/intlTelInput.min.js', array(), '23.0.12', true );
+
+    // Plugin assets
+    wp_register_style( 'vte-style', VTE_URL . 'assets/css/estimator.css', array('intl-tel-input'), $ver );
+    wp_register_script( 'vte-script', VTE_URL . 'assets/js/estimator.js', array('intl-tel-input'), $ver, true );
 }
 add_action( 'init', 'vte_register_assets' );
 
@@ -118,51 +123,78 @@ function vte_shortcode_handler( $atts ) {
     ?>
     <div class="vte-wrap">
         <form class="vte-form" onsubmit="return false;" aria-label="Vehicle transport estimator form">
-            <div class="vte-select-wrapper">
-                <select id="vte-pickup" class="vte-select" aria-required="true">
-                    <option value="">Pick-up State</option>
-                </select>
-            </div>
-
-            <div class="vte-select-wrapper">
-                <select id="vte-dropoff" class="vte-select" aria-required="true">
-                    <option value="">Drop-off State</option>
-                </select>
-            </div>
-
-            <div id="vte-estimate" class="vte-estimate-box" hidden>
-                <div class="vte-estimate-row">
-                    <span class="vte-estimate-label">Estimated Price Range:</span>
-                    <span class="vte-estimate-value" id="vte-price"></span>
+            <!-- Step 1: Route Selection -->
+            <div id="vte-step-1" class="vte-step">
+                <div class="vte-select-wrapper">
+                    <select id="vte-pickup" class="vte-select" aria-required="true">
+                        <option value="">Pick-up State</option>
+                    </select>
                 </div>
-                <div class="vte-estimate-row">
-                    <span class="vte-estimate-label">Estimated Distance:</span>
-                    <span class="vte-estimate-value" id="vte-distance"></span>
+
+                <div class="vte-select-wrapper">
+                    <select id="vte-dropoff" class="vte-select" aria-required="true">
+                        <option value="">Drop-off State</option>
+                    </select>
                 </div>
-                <div class="vte-estimate-row">
-                    <span class="vte-estimate-label">Estimated Transit Time:</span>
-                    <span class="vte-estimate-value" id="vte-transit"></span>
+
+                <div id="vte-estimate" class="vte-estimate-box" hidden>
+                    <div class="vte-estimate-row">
+                        <span class="vte-estimate-label">Estimated Price Range:</span>
+                        <span class="vte-estimate-value" id="vte-price"></span>
+                    </div>
+                    <div class="vte-estimate-row">
+                        <span class="vte-estimate-label">Estimated Distance:</span>
+                        <span class="vte-estimate-value" id="vte-distance"></span>
+                    </div>
+                    <div class="vte-estimate-row">
+                        <span class="vte-estimate-label">Estimated Transit Time:</span>
+                        <span class="vte-estimate-value" id="vte-transit"></span>
+                    </div>
+                    <p class="vte-disclaimer">* Prices varies by vehicle size, pickup location, fuel economy cost and season</p>
                 </div>
-                <p class="vte-disclaimer">* Prices varies by vehicle size, pickup location, fuel economy cost and season</p>
+
+                <div id="vte-message" class="vte-message-box" role="status" aria-live="polite" hidden>
+                    <p id="vte-message-text"></p>
+                </div>
+
+                <div class="vte-actions">
+                    <a id="vte-call" class="vte-btn vte-btn-call" href="#">
+                        <svg class="vte-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                        </svg>
+                        Call Now!
+                    </a>
+                    <button id="vte-next" class="vte-btn vte-btn-next" type="button">
+                        <svg class="vte-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M5 12h14M12 5l7 7-7 7"></path>
+                        </svg>
+                        Next Step
+                    </button>
+                </div>
             </div>
 
-            <div id="vte-message" class="vte-message-box" role="status" aria-live="polite" hidden>
-                <p id="vte-message-text"></p>
-            </div>
+            <!-- Step 2: User Information -->
+            <div id="vte-step-2" class="vte-step" hidden>
+                <div class="vte-input-wrapper">
+                    <input type="text" id="vte-fullname" class="vte-input" placeholder="Full Name" required>
+                </div>
 
-            <div class="vte-actions">
-                <a id="vte-call" class="vte-btn vte-btn-call" href="#">
-                    <svg class="vte-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-                    </svg>
-                    Call Now!
-                </a>
-                <button id="vte-next" class="vte-btn vte-btn-next" type="button">
-                    <svg class="vte-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M5 12h14M12 5l7 7-7 7"></path>
-                    </svg>
-                    Next Step
-                </button>
+                <div class="vte-input-wrapper">
+                    <input type="tel" id="vte-phone" class="vte-input" placeholder="Phone number" required>
+                </div>
+
+                <div class="vte-input-wrapper">
+                    <input type="email" id="vte-email" class="vte-input" placeholder="Email Address" required>
+                </div>
+
+                <div class="vte-actions vte-actions-center">
+                    <button id="vte-submit" class="vte-btn vte-btn-next vte-btn-submit" type="submit">
+                        <svg class="vte-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M5 12h14M12 5l7 7-7 7"></path>
+                        </svg>
+                        Next Step
+                    </button>
+                </div>
             </div>
         </form>
     </div>
