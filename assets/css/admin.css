@@ -1,0 +1,66 @@
+/* Transport Estimator Admin Styles */
+
+.vte-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.vte-stat-card {
+    background: #fff;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border-radius: 4px;
+}
+
+.vte-stat-card.total {
+    border-left: 4px solid #2271b1;
+}
+
+.vte-stat-card.today {
+    border-left: 4px solid #00a32a;
+}
+
+.vte-stat-card.month {
+    border-left: 4px solid #d63638;
+}
+
+.vte-stat-label {
+    font-size: 14px;
+    color: #646970;
+    margin-bottom: 5px;
+}
+
+.vte-stat-value {
+    font-size: 32px;
+    font-weight: 600;
+    color: #1d2327;
+}
+
+.vte-submissions table {
+    margin-top: 20px;
+}
+
+.vte-submissions table td a {
+    text-decoration: none;
+}
+
+.vte-submissions table td a:hover {
+    text-decoration: underline;
+}
+
+.vte-submissions .search-box input[type="search"] {
+    width: 300px;
+    max-width: 100%;
+}
+
+@media (max-width: 782px) {
+    .vte-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .vte-submissions .search-box input[type="search"] {
+        width: 100%;
+    }
+}

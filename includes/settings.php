@@ -73,30 +73,4 @@ function vte_sanitize_settings( $input ) {
     return $out;
 }
 
-function vte_add_settings_page() {
-    add_menu_page(
-        __( 'Transport Estimator', 'vehicle-transport-estimator' ),
-        __( 'Transport Estimator', 'vehicle-transport-estimator' ),
-        'manage_options',
-        'vte_settings',
-        'vte_render_settings_page',
-        'dashicons-car',
-        30
-    );
-}
-add_action( 'admin_menu', 'vte_add_settings_page' );
-
-function vte_render_settings_page() {
-    ?>
-    <div class="wrap">
-        <h1><?php echo esc_html( __( 'Transport Estimator Settings', 'vehicle-transport-estimator' ) ); ?></h1>
-        <form method="post" action="options.php">
-            <?php
-            settings_fields( 'vte_settings_group' );
-            do_settings_sections( 'vte_settings' );
-            submit_button();
-            ?>
-        </form>
-    </div>
-    <?php
-}
+// Settings page rendering is now handled in admin-page.php

@@ -15,8 +15,13 @@ define( 'VTE_VERSION', '1.0.0' );
 define( 'VTE_DIR', plugin_dir_path( __FILE__ ) );
 define( 'VTE_URL', plugin_dir_url( __FILE__ ) );
 
-/* Include settings */
+/* Include files */
+require_once VTE_DIR . 'includes/database.php';
 require_once VTE_DIR . 'includes/settings.php';
+require_once VTE_DIR . 'includes/admin-page.php';
+
+/* Activation hook */
+register_activation_hook( __FILE__, 'vte_create_submissions_table' );
 
 /**
  * Returns default options.
@@ -239,8 +244,23 @@ function vte_ajax_submit_form() {
         return;
     }
 
+    // Save to database
+    $submission_data = array(
+        'fullname' => $fullname,
+        'phone' => $phone,
+        'email' => $email,
+        'pickup' => $pickup,
+        'dropoff' => $dropoff,
+        'price' => $price,
+        'distance' => $distance,
+        'transit' => $transit,
+    );
+
+    $submission_id = vte_save_submission( $submission_data );
+
     // Prepare webhook payload
     $payload = array(
+        'id' => $submission_id,
         'fullname' => $fullname,
         'phone' => $phone,
         'email' => $email,
