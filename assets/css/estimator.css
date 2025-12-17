@@ -226,9 +226,11 @@
 
 /* Step Management */
 .vte-step {
+  padding: 40px;
+  background-color: #FFFFFF;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 25px;
 }
 
 /* Input Fields */
