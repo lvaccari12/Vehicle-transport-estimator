@@ -258,6 +258,13 @@ function vte_ajax_submit_form() {
 
     $submission_id = vte_save_submission( $submission_data );
 
+    // Check if database save failed
+    if ( $submission_id === false ) {
+        error_log( 'VTE: Failed to save submission to database' );
+        // Continue anyway to send webhook, but log the error
+        $submission_id = 0;
+    }
+
     // Prepare webhook payload
     $payload = array(
         'id' => $submission_id,

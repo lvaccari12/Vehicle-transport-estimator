@@ -38,10 +38,25 @@ function vte_create_submissions_table() {
 }
 
 /**
+ * Check if submissions table exists.
+ */
+function vte_table_exists() {
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'vte_submissions';
+    $query = $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table_name ) );
+    return $wpdb->get_var( $query ) === $table_name;
+}
+
+/**
  * Save submission to database.
  */
 function vte_save_submission( $data ) {
     global $wpdb;
+
+    // Check if table exists, create if it doesn't
+    if ( ! vte_table_exists() ) {
+        vte_create_submissions_table();
+    }
 
     $table_name = $wpdb->prefix . 'vte_submissions';
 
@@ -61,11 +76,13 @@ function vte_save_submission( $data ) {
 
     $result = $wpdb->insert( $table_name, $insert_data );
 
-    if ( $result ) {
-        return $wpdb->insert_id;
+    if ( $result === false ) {
+        // Log the error for debugging
+        error_log( 'VTE Database Error: ' . $wpdb->last_error );
+        return false;
     }
 
-    return false;
+    return $wpdb->insert_id;
 }
 
 /**
