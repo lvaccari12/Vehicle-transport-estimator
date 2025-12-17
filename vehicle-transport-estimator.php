@@ -143,6 +143,7 @@ function vte_shortcode_handler( $atts ) {
                     <span class="vte-estimate-label">Estimated Transit Time:</span>
                     <span class="vte-estimate-value" id="vte-transit"></span>
                 </div>
+                <p class="vte-disclaimer">* Prices varies by vehicle size, pickup location, fuel economy cost and season</p>
             </div>
 
             <div id="vte-message" class="vte-message-box" role="status" aria-live="polite" hidden>
