@@ -10,7 +10,7 @@ function vte_add_admin_menu() {
     $hook = add_menu_page(
         __( 'Transport Estimator', 'vehicle-transport-estimator' ),
         __( 'Transport Estimator', 'vehicle-transport-estimator' ),
-        'manage_options',
+        'read',
         'vte-admin',
         'vte_render_admin_page',
         'dashicons-car',
@@ -33,11 +33,13 @@ function vte_enqueue_admin_assets() {
  * Render admin page with tabs.
  */
 function vte_render_admin_page() {
-    // Handle delete action
+    // Handle delete action (only for administrators)
     if ( isset( $_GET['action'] ) && $_GET['action'] === 'delete' && isset( $_GET['id'] ) && isset( $_GET['_wpnonce'] ) ) {
-        if ( wp_verify_nonce( $_GET['_wpnonce'], 'vte_delete_submission_' . $_GET['id'] ) ) {
+        if ( current_user_can( 'manage_options' ) && wp_verify_nonce( $_GET['_wpnonce'], 'vte_delete_submission_' . $_GET['id'] ) ) {
             vte_delete_submission( $_GET['id'] );
             echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Submission deleted successfully.', 'vehicle-transport-estimator' ) . '</p></div>';
+        } elseif ( ! current_user_can( 'manage_options' ) ) {
+            echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'You do not have permission to delete submissions.', 'vehicle-transport-estimator' ) . '</p></div>';
         }
     }
 
@@ -46,21 +48,25 @@ function vte_render_admin_page() {
     <div class="wrap">
         <h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
 
-        <nav class="nav-tab-wrapper wp-clearfix" style="margin-bottom: 20px;">
-            <a href="?page=vte-admin&tab=submissions" class="nav-tab <?php echo $current_tab === 'submissions' ? 'nav-tab-active' : ''; ?>">
-                <?php esc_html_e( 'Submissions', 'vehicle-transport-estimator' ); ?>
-            </a>
-            <a href="?page=vte-admin&tab=settings" class="nav-tab <?php echo $current_tab === 'settings' ? 'nav-tab-active' : ''; ?>">
-                <?php esc_html_e( 'Settings', 'vehicle-transport-estimator' ); ?>
-            </a>
-        </nav>
+        <?php if ( current_user_can( 'manage_options' ) ) : ?>
+            <nav class="nav-tab-wrapper wp-clearfix" style="margin-bottom: 20px;">
+                <a href="?page=vte-admin&tab=submissions" class="nav-tab <?php echo $current_tab === 'submissions' ? 'nav-tab-active' : ''; ?>">
+                    <?php esc_html_e( 'Submissions', 'vehicle-transport-estimator' ); ?>
+                </a>
+                <a href="?page=vte-admin&tab=settings" class="nav-tab <?php echo $current_tab === 'settings' ? 'nav-tab-active' : ''; ?>">
+                    <?php esc_html_e( 'Settings', 'vehicle-transport-estimator' ); ?>
+                </a>
+            </nav>
+        <?php endif; ?>
 
         <div class="tab-content">
             <?php
             if ( $current_tab === 'submissions' ) {
                 vte_render_submissions_tab();
-            } elseif ( $current_tab === 'settings' ) {
+            } elseif ( $current_tab === 'settings' && current_user_can( 'manage_options' ) ) {
                 vte_render_settings_tab();
+            } elseif ( $current_tab === 'settings' && ! current_user_can( 'manage_options' ) ) {
+                echo '<div class="notice notice-error"><p>' . esc_html__( 'You do not have permission to access settings.', 'vehicle-transport-estimator' ) . '</p></div>';
             }
             ?>
         </div>
@@ -136,11 +142,15 @@ function vte_render_submissions_tab() {
                             <td><?php echo esc_html( $submission->pickup_state . ' → ' . $submission->dropoff_state ); ?></td>
                             <td><?php echo esc_html( $submission->price ); ?><br><small style="color: #646970;"><?php echo esc_html( $submission->distance . ' • ' . $submission->transit_time ); ?></small></td>
                             <td>
-                                <a href="<?php echo esc_url( wp_nonce_url( add_query_arg( array( 'action' => 'delete', 'id' => $submission->id ) ), 'vte_delete_submission_' . $submission->id ) ); ?>"
-                                   class="button button-small button-link-delete"
-                                   onclick="return confirm('<?php esc_attr_e( 'Are you sure you want to delete this submission?', 'vehicle-transport-estimator' ); ?>');">
-                                    <?php esc_html_e( 'Delete', 'vehicle-transport-estimator' ); ?>
-                                </a>
+                                <?php if ( current_user_can( 'manage_options' ) ) : ?>
+                                    <a href="<?php echo esc_url( wp_nonce_url( add_query_arg( array( 'action' => 'delete', 'id' => $submission->id ) ), 'vte_delete_submission_' . $submission->id ) ); ?>"
+                                       class="button button-small button-link-delete"
+                                       onclick="return confirm('<?php esc_attr_e( 'Are you sure you want to delete this submission?', 'vehicle-transport-estimator' ); ?>');">
+                                        <?php esc_html_e( 'Delete', 'vehicle-transport-estimator' ); ?>
+                                    </a>
+                                <?php else : ?>
+                                    <span style="color: #646970;"><?php esc_html_e( '—', 'vehicle-transport-estimator' ); ?></span>
+                                <?php endif; ?>
                             </td>
                         </tr>
                     <?php endforeach; ?>
