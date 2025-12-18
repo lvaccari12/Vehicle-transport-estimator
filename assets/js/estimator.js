@@ -21,7 +21,6 @@
     var priceEl = qs('vte-price');
     var distEl = qs('vte-distance');
     var transitEl = qs('vte-transit');
-    var callBtn = qs('vte-call');
     var nextBtn = qs('vte-next');
 
     // Initialize intl-tel-input
@@ -108,27 +107,12 @@
       if (est) {
         showEstimate(est);
       } else {
-        showMessage("This route isn't available for instant estimates yet.\nClick 'Call Now!' for a custom quote.", true);
+        showMessage("This route isn't available for instant estimates yet. Please contact us for a custom quote.", false);
       }
     }
 
     pickup.addEventListener('change', evaluate);
     dropoff.addEventListener('change', evaluate);
-
-    // Set call link
-    if (vteData.phone) {
-      var tel = vteData.phone.replace(/\s+/g,'');
-      callBtn.setAttribute('href', 'tel:' + tel);
-    }
-
-    // Make 'Call Now!' text clickable in message
-    if (msgText) {
-      msgText.addEventListener('click', function(e) {
-        if (e.target.classList.contains('vte-call-link')) {
-          callBtn.click();
-        }
-      });
-    }
 
     // Step navigation
     var step1 = qs('vte-step-1');

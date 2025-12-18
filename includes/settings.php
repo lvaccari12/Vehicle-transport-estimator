@@ -10,17 +10,9 @@ function vte_register_settings() {
         'vte_main_section',
         __( 'Transport Estimator Settings', 'vehicle-transport-estimator' ),
         function() {
-            echo '<p>' . esc_html__( 'Configure phone number, next-step URL, and webhook integration.', 'vehicle-transport-estimator' ) . '</p>';
+            echo '<p>' . esc_html__( 'Configure next-step URL and webhook integration.', 'vehicle-transport-estimator' ) . '</p>';
         },
         'vte_settings'
-    );
-
-    add_settings_field(
-        'vte_phone',
-        __( 'Phone Number', 'vehicle-transport-estimator' ),
-        'vte_phone_field_cb',
-        'vte_settings',
-        'vte_main_section'
     );
 
     add_settings_field(
@@ -41,12 +33,6 @@ function vte_register_settings() {
 }
 add_action( 'admin_init', 'vte_register_settings' );
 
-function vte_phone_field_cb() {
-    $opts = get_option( 'vte_settings', array() );
-    $val = isset( $opts['phone'] ) ? $opts['phone'] : '+18005551234';
-    printf( '<input type="text" id="vte_phone" name="vte_settings[phone]" value="%s" class="regular-text">', esc_attr( $val ) );
-}
-
 function vte_next_url_field_cb() {
     $opts = get_option( 'vte_settings', array() );
     $val = isset( $opts['next_step_url'] ) ? $opts['next_step_url'] : '/quote/step-2';
@@ -61,9 +47,6 @@ function vte_webhook_url_field_cb() {
 
 function vte_sanitize_settings( $input ) {
     $out = array();
-    if ( isset( $input['phone'] ) ) {
-        $out['phone'] = sanitize_text_field( $input['phone'] );
-    }
     if ( isset( $input['next_step_url'] ) ) {
         $out['next_step_url'] = esc_url_raw( $input['next_step_url'] );
     }

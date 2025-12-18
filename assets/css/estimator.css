@@ -197,17 +197,17 @@
 }
 
 .vte-btn-next {
-  background-color: #D84315;
+  background: linear-gradient(135deg, #F25010 0%, #8D2E09 100%);
   color: #FFFFFF;
-  border: 2px solid #D84315;
+  border: 0px;
 }
 
 .vte-btn-next:hover {
-  background-color: #C23910;
+  background: linear-gradient(135deg, #D84315 0%, #7A2707 100%);
 }
 
 .vte-btn-next:active {
-  background-color: #A8300D;
+  background: linear-gradient(135deg, #C23910 0%, #6B2205 100%);
 }
 
 .vte-icon {
