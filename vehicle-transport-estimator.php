@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'VTE_VERSION', '1.0.0' );
+define( 'VTE_VERSION', '1.1.0' );
 define( 'VTE_DIR', plugin_dir_path( __FILE__ ) );
 define( 'VTE_URL', plugin_dir_url( __FILE__ ) );
 
@@ -183,6 +183,13 @@ function vte_shortcode_handler( $atts ) {
                     <input type="email" id="vte-email" class="vte-input" placeholder="Email Address" required>
                 </div>
 
+                <div class="vte-consent-wrapper">
+                    <label class="vte-consent-label">
+                        <input type="checkbox" id="vte-consent" class="vte-consent-checkbox" required>
+                        <span class="vte-consent-text">By checking this box, I consent to receive text messages related to (message type) from (company name). You can reply "STOP" at any time to opt-out. Message and data rates may apply. Message frequency may vary, text HELP for assistance. For more information, please visit our <a href="https://whitestalliontransit.com/privacy-policy" target="_blank" class="vte-consent-link">Privacy Policy</a> and SMS <a href="https://whitestalliontransit.com/terms-conditions/" target="_blank" class="vte-consent-link">Terms and Conditions</a></span>
+                    </label>
+                </div>
+
                 <div class="vte-actions vte-actions-center">
                     <button id="vte-submit" class="vte-btn vte-btn-next vte-btn-submit" type="submit">
                         <svg class="vte-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -210,6 +217,11 @@ function vte_ajax_submit_form() {
     $fullname = isset( $_POST['fullname'] ) ? sanitize_text_field( $_POST['fullname'] ) : '';
     $phone = isset( $_POST['phone'] ) ? sanitize_text_field( $_POST['phone'] ) : '';
     $email = isset( $_POST['email'] ) ? sanitize_email( $_POST['email'] ) : '';
+    $consent = isset( $_POST['consent'] ) ? sanitize_text_field( $_POST['consent'] ) : '';
+
+    // Debug log
+    error_log( 'VTE Consent Debug - Raw POST consent: ' . print_r( $_POST['consent'] ?? 'NOT SET', true ) );
+    error_log( 'VTE Consent Debug - Sanitized consent: ' . $consent );
 
     // Get route data
     $pickup = isset( $_POST['pickup'] ) ? sanitize_text_field( $_POST['pickup'] ) : '';
@@ -233,11 +245,20 @@ function vte_ajax_submit_form() {
         return;
     }
 
+    // Validate consent - must be '1' (checkbox was checked)
+    if ( $consent !== '1' ) {
+        wp_send_json_error( array(
+            'message' => __( 'You must consent to receive text messages.', 'vehicle-transport-estimator' )
+        ) );
+        return;
+    }
+
     // Save to database
     $submission_data = array(
         'fullname' => $fullname,
         'phone' => $phone,
         'email' => $email,
+        'consent' => $consent,
         'pickup' => $pickup,
         'dropoff' => $dropoff,
         'price' => $price,
@@ -260,6 +281,7 @@ function vte_ajax_submit_form() {
         'fullname' => $fullname,
         'phone' => $phone,
         'email' => $email,
+        'consent_given' => $consent === '1',
         'route' => array(
             'pickup' => $pickup,
             'dropoff' => $dropoff,

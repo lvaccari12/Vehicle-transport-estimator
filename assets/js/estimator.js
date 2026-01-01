@@ -158,6 +158,8 @@
         var fullname = qs('vte-fullname').value;
         var phone = phoneInput ? phoneInput.value : '';
         var email = qs('vte-email').value;
+        var consentCheckbox = qs('vte-consent');
+        var consentGiven = consentCheckbox ? consentCheckbox.checked : false;
 
         // Get full phone number with country code if intl-tel-input is initialized
         if (iti) {
@@ -176,6 +178,12 @@
           return;
         }
 
+        // Validate consent checkbox
+        if (!consentGiven) {
+          alert('Please consent to receive text messages by checking the consent box');
+          return;
+        }
+
         // Disable submit button during submission
         submitBtn.disabled = true;
         submitBtn.textContent = 'Submitting...';
@@ -187,6 +195,7 @@
         formData.append('fullname', fullname);
         formData.append('phone', phone);
         formData.append('email', email);
+        formData.append('consent', consentGiven ? '1' : '0');
         formData.append('pickup', routeData.pickup);
         formData.append('dropoff', routeData.dropoff);
         formData.append('price', routeData.price);

@@ -405,6 +405,88 @@
   border-color: #D84315 !important;
 }
 
+/* Consent Checkbox Styling */
+.vte-consent-wrapper {
+  width: 100%;
+  margin-top: -9px;
+}
+
+.vte-consent-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 18px;
+  color: #000000;
+}
+
+.vte-consent-checkbox {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  border: 2px solid #000000;
+  border-radius: 0;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: #FFFFFF;
+  position: relative;
+  outline: none;
+}
+
+.vte-consent-checkbox:checked {
+  background-color: #000000;
+}
+
+.vte-consent-checkbox:checked::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 6px;
+  width: 4px;
+  height: 10px;
+  border: solid #FFFFFF;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.vte-consent-checkbox:focus {
+  outline: 2px solid #000000;
+  outline-offset: 2px;
+}
+
+.vte-consent-text {
+  flex: 1;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 18px;
+  color: #000000;
+}
+
+.vte-consent-link {
+  color: #F25010;
+  text-decoration: underline;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 18px;
+  transition: color 0.2s ease;
+}
+
+.vte-consent-link:hover {
+  color: #D84315;
+}
+
+.vte-consent-link:active {
+  color: #C23910;
+}
+
 /* Hidden state */
 [hidden] {
   display: none !important;

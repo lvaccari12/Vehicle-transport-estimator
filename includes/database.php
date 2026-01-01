@@ -17,6 +17,7 @@ function vte_create_submissions_table() {
         fullname varchar(255) NOT NULL,
         phone varchar(50) NOT NULL,
         email varchar(255) NOT NULL,
+        consent_given tinyint(1) DEFAULT 0,
         pickup_state varchar(100) NOT NULL,
         dropoff_state varchar(100) NOT NULL,
         price varchar(100) DEFAULT NULL,
@@ -34,7 +35,7 @@ function vte_create_submissions_table() {
     dbDelta( $sql );
 
     // Store database version
-    add_option( 'vte_db_version', '1.0.0' );
+    update_option( 'vte_db_version', '1.1.0' );
 }
 
 /**
@@ -48,6 +49,36 @@ function vte_table_exists() {
 }
 
 /**
+ * Upgrade database schema if needed.
+ */
+function vte_maybe_upgrade_database() {
+    global $wpdb;
+
+    $current_version = get_option( 'vte_db_version', '1.0.0' );
+
+    // Upgrade to version 1.1.0 - Add consent_given column
+    if ( version_compare( $current_version, '1.1.0', '<' ) ) {
+        $table_name = $wpdb->prefix . 'vte_submissions';
+
+        // Check if consent_given column exists
+        $column_exists = $wpdb->get_results(
+            $wpdb->prepare(
+                "SHOW COLUMNS FROM $table_name LIKE %s",
+                'consent_given'
+            )
+        );
+
+        if ( empty( $column_exists ) ) {
+            $wpdb->query(
+                "ALTER TABLE $table_name ADD COLUMN consent_given tinyint(1) DEFAULT 0 AFTER email"
+            );
+        }
+
+        update_option( 'vte_db_version', '1.1.0' );
+    }
+}
+
+/**
  * Save submission to database.
  */
 function vte_save_submission( $data ) {
@@ -58,12 +89,16 @@ function vte_save_submission( $data ) {
         vte_create_submissions_table();
     }
 
+    // Run database upgrade if needed
+    vte_maybe_upgrade_database();
+
     $table_name = $wpdb->prefix . 'vte_submissions';
 
     $insert_data = array(
         'fullname' => sanitize_text_field( $data['fullname'] ),
         'phone' => sanitize_text_field( $data['phone'] ),
         'email' => sanitize_email( $data['email'] ),
+        'consent_given' => isset( $data['consent'] ) ? absint( $data['consent'] ) : 0,
         'pickup_state' => sanitize_text_field( $data['pickup'] ),
         'dropoff_state' => sanitize_text_field( $data['dropoff'] ),
         'price' => sanitize_text_field( $data['price'] ),

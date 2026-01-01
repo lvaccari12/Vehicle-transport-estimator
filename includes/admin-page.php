@@ -127,6 +127,7 @@ function vte_render_submissions_tab() {
                         <th><?php esc_html_e( 'Name', 'vehicle-transport-estimator' ); ?></th>
                         <th><?php esc_html_e( 'Email', 'vehicle-transport-estimator' ); ?></th>
                         <th><?php esc_html_e( 'Phone', 'vehicle-transport-estimator' ); ?></th>
+                        <th><?php esc_html_e( 'SMS Consent', 'vehicle-transport-estimator' ); ?></th>
                         <th><?php esc_html_e( 'Route', 'vehicle-transport-estimator' ); ?></th>
                         <th><?php esc_html_e( 'Price', 'vehicle-transport-estimator' ); ?></th>
                         <th><?php esc_html_e( 'Actions', 'vehicle-transport-estimator' ); ?></th>
@@ -139,6 +140,16 @@ function vte_render_submissions_tab() {
                             <td><strong><?php echo esc_html( $submission->fullname ); ?></strong></td>
                             <td><a href="mailto:<?php echo esc_attr( $submission->email ); ?>"><?php echo esc_html( $submission->email ); ?></a></td>
                             <td><a href="tel:<?php echo esc_attr( $submission->phone ); ?>"><?php echo esc_html( $submission->phone ); ?></a></td>
+                            <td>
+                                <?php
+                                $consent_given = isset( $submission->consent_given ) ? $submission->consent_given : 0;
+                                if ( $consent_given ) :
+                                ?>
+                                    <span style="color: #00a32a; font-weight: 600;">✓ <?php esc_html_e( 'Yes', 'vehicle-transport-estimator' ); ?></span>
+                                <?php else : ?>
+                                    <span style="color: #646970;">— <?php esc_html_e( 'No', 'vehicle-transport-estimator' ); ?></span>
+                                <?php endif; ?>
+                            </td>
                             <td><?php echo esc_html( $submission->pickup_state . ' → ' . $submission->dropoff_state ); ?></td>
                             <td><?php echo esc_html( $submission->price ); ?><br><small style="color: #646970;"><?php echo esc_html( $submission->distance . ' • ' . $submission->transit_time ); ?></small></td>
                             <td>
